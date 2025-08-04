@@ -26,19 +26,19 @@ export const models: Model[] = [
     name: 'Gemini 2.5 Pro',
     provider: 'Google',
     description: 'Advanced reasoning, coding, and multimodal understanding.',
-    value: Models.GEMINI_2_5_PRO_PREVIEW_03_25
+    value: Models.GEMINI_2_5_PRO
   },
   {
     name: 'Gemini 2.5 Flash',
     provider: 'Google',
     description: 'Advanced reasoning, coding, and multimodal understanding.',
-    value: Models.GEMINI_2_5_FLASH_PREVIEW_04_17
+    value: Models.GEMINI_2_5_FLASH
   },
   {
-    name: 'Gemini 2.0 Flash Exp',
+    name: 'Gemini 2.5 Flash Lite',
     provider: 'Google',
     description: 'Advanced reasoning, coding, and multimodal understanding.',
-    value: Models.GEMINI_2_0_FLASH_EXP
+    value: Models.GEMINI_2_5_FLASH_LITE
   }
 ];
 
