@@ -6,8 +6,11 @@ export enum Models {
   GPT_4O = 'gpt-4o',
   GPT_4O_MINI = 'gpt-4o-mini',
   GEMINI_2_5_FLASH_PREVIEW_04_17 = 'gemini-2.5-flash-preview-04-17',
+  GEMINI_2_5_FLASH = 'gemini-2.5-flash',
   GEMINI_2_5_PRO_PREVIEW_03_25 = 'gemini-2.5-pro-exp-03-25',
-  GEMINI_2_0_FLASH_EXP = 'gemini-2.0-flash-exp'
+  GEMINI_2_5_PRO = 'gemini-2.5-pro',
+  GEMINI_2_0_FLASH_EXP = 'gemini-2.0-flash-exp',
+  GEMINI_2_5_FLASH_LITE = 'gemini-2.5-flash-lite'
 }
 
 export type Agent = {
