@@ -9,7 +9,7 @@ import "./globals.css";
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Idle",
+  title: "Idle Chat",
   description: "Your AI assistant for all your needs.",
   applicationName: "Idle",
   authors: [

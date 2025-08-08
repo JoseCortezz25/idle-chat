@@ -2,7 +2,7 @@ import { Chat } from "@/components/chat/chat";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Idle - Chat",
+  title: "Idle Chat",
   description: "Chat with the AI Assistant"
 };
 

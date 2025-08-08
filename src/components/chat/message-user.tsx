@@ -13,17 +13,17 @@ interface MessageUserProps {
   onEdit: (id: string, newText: string) => void;
   onReload: () => void;
   onDelete: (id: string) => void;
+  isLoading: boolean;
 }
 
-export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUserProps) => {
+export const MessageUser = ({ message, onEdit, onReload, onDelete, isLoading }: MessageUserProps) => {
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const [editInput, setEditInput] = useState(message.content);
   const [isEditing, setIsEditing] = useState(false);
 
-  const contentRef = useRef<HTMLDivElement>(null);  
+  const contentRef = useRef<HTMLDivElement>(null);
   const imageAttachments = message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('image/'));
   const filesAttachments = message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('application/pdf'));
-
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -76,7 +76,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
         </div>
 
         <div>
-          {filesAttachments && filesAttachments.map((attachment: Attachment, index) => (   
+          {filesAttachments && filesAttachments.map((attachment: Attachment, index) => (
             <div className="bg-brand-green-light/10 rounded-md p-2 flex items-center gap-3 cursor-pointer" key={`${message.id}-${index}`}>
               <div className="w-[45px] h-[45px] rounded-md bg-brand-green/10 text-brand-green flex items-center justify-center">
                 <File className="size-5" />
@@ -88,7 +88,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
 
         {isEditing ? (
           <div
-            className="bg-accent relative flex min-w-[180px] flex-col gap-2 rounded-3xl px-5 pb-2.5 pt-3.5"
+            className="bg-accent relative flex min-w-[300px] flex-col gap-2 rounded-3xl px-5 pb-2.5 pt-3.5"
             style={{
               width: contentRef.current?.offsetWidth
             }}
@@ -112,7 +112,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
               <Button size="sm" variant="ghost" onClick={handleEditCancel}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleSave}>
+              <Button size="sm" onClick={handleSave} disabled={isLoading}>
                 Save
               </Button>
             </div>
@@ -134,7 +134,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
             className="group/item"
             onClick={() => handleCopy(message.content)}
           >
-            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500"/>}
+            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500" />}
           </Button>
 
           <Button
@@ -143,7 +143,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
             className="group/item hover:bg-red-500/10 transition-all duration-500"
             onClick={handleDelete}
           >
-            <Trash className="size-4 group-hover/item:text-red-500 transition-transform duration-500"/>
+            <Trash className="size-4 group-hover/item:text-red-500 transition-transform duration-500" />
           </Button>
 
           <Button

@@ -17,10 +17,10 @@ export const AgentCard = ({ title, description, image, agentName }: AgentCardPro
   };
 
   return (
-    <button onClick={handleClick} className="bg-secondary hover:bg-accent cursor-pointer rounded-xl p-4 transition-colors">
+    <button onClick={handleClick} className="hover:bg-secondary cursor-pointer rounded-xl p-4 transition-colors duration-200 ease-out">
       <div className="flex items-center space-x-4">
-        <div className="w-[60px] h-[60px] rounded-full overflow-hidden">
-          <img src={image} alt={title} className="w-[60px] h-[60px] rounded-full object-cover" />
+        <div className="w-[70px] h-[70px] rounded-xl overflow-hidden">
+          <img src={image} alt={title} className="w-[70px] h-[70px] rounded-xl object-cover" />
         </div>
         <div className="min-w-0 flex-1 text-left">
           <h3 className="text-foreground truncate text-base font-medium">

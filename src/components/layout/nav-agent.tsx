@@ -1,13 +1,16 @@
 "use client";
 
 import { useAgent } from "@/stores/use-agent";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export const NavAgent = () => {
   const { agent } = useAgent();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const agentParam = searchParams.get("agent");
 
   if (!pathname.includes("chat")) return null;
+  if (!agentParam) return null;
   if (!agent) return null;
 
   return (

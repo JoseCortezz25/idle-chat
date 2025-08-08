@@ -68,7 +68,7 @@ export const Chat = () => {
   } = useChat({
     maxSteps: 1,
     body: {
-      model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH_PREVIEW_04_17,
+      model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH,
       agentName: agentPrompt?.agentName || null,
       isSearchGrounding
     },
@@ -76,9 +76,16 @@ export const Chat = () => {
       console.error('Error in chat:', error);
     },
     onToolCall({ toolCall }) {
+      console.log('toolCall', toolCall);
+
       if (toolCall.toolName === 'showPromptInCanvas') {
         setIsArtifactPanelOpen(true);
         setArtifactValue((toolCall.args as { prompt: string }).prompt);
+      }
+
+      if (toolCall.toolName === 'showEstimationInCanvas') {
+        setIsArtifactPanelOpen(true);
+        setArtifactValue((toolCall.args as { estimation: string }).estimation);
       }
     }
   });
@@ -97,6 +104,7 @@ export const Chat = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    if (!window) return;
     const agentName = searchParams.get("agent");
     document.title = agentName ? `Idle - Talking with ${agentName}` : 'Idle - Chat';
 

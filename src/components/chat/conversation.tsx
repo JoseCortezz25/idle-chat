@@ -27,6 +27,7 @@ export const Conversation = ({
   onShowCanvas
 }: ConversationProps) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   return (
     <ChatContainer
@@ -56,6 +57,7 @@ export const Conversation = ({
             onEdit={onEdit}
             onReload={reload}
             onDelete={onDelete}
+            isLoading={isLoading}
           />
         );
       })}

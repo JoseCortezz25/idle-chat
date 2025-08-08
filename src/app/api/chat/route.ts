@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     const defaultTools = { generateImageTool }; // Tools for all agents
     const tools = { ...defaultTools, ...(currentAgent?.tools || {}) };
 
+    console.log('tools', tools);
     const result = streamText({
       model: google(model, {
         useSearchGrounding: isSearchGrounding,

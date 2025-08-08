@@ -6,7 +6,8 @@ import {
   learnWithQuizzySystemPrompt,
   n8nSystemPrompt,
   socratesSystemPrompt,
-  yodaSystemPrompt
+  yodaSystemPrompt,
+  orionestSystemPrompt
 } from '@/ai/prompts';
 import { Agent, Model, Models } from '../lib/types';
 import { z } from 'zod';
@@ -19,7 +20,8 @@ export type AgentNames =
   | 'quizzy'
   | 'formal'
   | 'fact-checker'
-  | 'n8n-builder';
+  | 'n8n-builder'
+  | 'orionest';
 
 export const models: Model[] = [
   {
@@ -115,11 +117,25 @@ export const agents: Agent[] = [
     ]
   },
   {
-    name: 'Learn with Quizzy',
+    name: 'Study Together',
     description: 'Agent that helps you learn and understand any topic.',
     image: '/images/agents/quizzy-agent.png',
     agentName: 'quizzy',
-    systemPrompt: learnWithQuizzySystemPrompt
+    systemPrompt: learnWithQuizzySystemPrompt,
+    suggestions: [
+      {
+        suggestion: `Profun`,
+        prompt: `Explain [topic] like I am a complete beginner. Slowly increase the depth while adding real-world applications as we go.”`
+      },
+      {
+        suggestion: '',
+        prompt: `Give me a step-by-step explanation of topic, starting from beginner-level concepts. Gradually move to intermediate and advanced parts with real-world examples.`
+      },
+      {
+        suggestion: '',
+        prompt: `Create a detailed roadmap to master [topic]. Break it into phases: basics, intermediate, and advanced. Include tools, resources, timelines, and best practices.`
+      }
+    ]
   },
   {
     name: 'Formal Writter',
@@ -164,6 +180,38 @@ export const agents: Agent[] = [
         prompt: 'Is the Earth flat?'
       }
     ]
+  },
+  {
+    name: 'Orionest',
+    description: 'Estimate the time and cost of a project.',
+    image: '/images/agents/orionest-agent.png',
+    agentName: 'orionest',
+    systemPrompt: orionestSystemPrompt,
+    suggestions: [
+      {
+        suggestion: 'Estimation of a login and registration flow',
+        prompt:
+          "I need an estimate for building a login and registration flow for a new application. It needs to work on web and mobile. We're thinking React with Next.js. It should include email/password login, social login (Google), and a simple registration form."
+      },
+      {
+        suggestion: 'Estimate landing page to sell a product',
+        prompt:
+          "I want to estimate the cost of a landing page to sell a product. It needs to work on web and mobile. We're thinking React with Next.js. It should include a form to collect the user's email and a button to buy the product. I want two pages: home and internal page per product"
+      }
+    ],
+    tools: {
+      showEstimationInCanvas: {
+        description:
+          'Usa esta herramienta para mostrarle al usuario la estimación en formato de tabla en el canvas.',
+        parameters: z.object({
+          estimation: z.string().describe('The estimation in table format.')
+        }),
+        execute: async ({ estimation }) => {
+          console.log('estimation', estimation);
+          return { estimation };
+        }
+      }
+    }
   }
 ];
 
