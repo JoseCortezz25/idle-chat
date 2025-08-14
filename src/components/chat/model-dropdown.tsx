@@ -6,18 +6,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings } from "lucide-react";
 import { models } from "@/ai/agents";
+import { cn } from "@/lib/utils";
 
 interface ModelDropdownProps {
   setModel: (model: string) => void;
+  model: string;
+  variant?: "icon" | "input";
 }
 
-export const ModelDropdown = ({ setModel }: ModelDropdownProps) => {
+export const ModelDropdown = ({
+  setModel,
+  variant = "icon",
+  model
+}: ModelDropdownProps) => {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="chat-tools__button">
-        <Settings className="size-4" />
+      <DropdownMenuTrigger className={cn(variant === "icon" && "chat-tools__button", variant === "input" && "chat-tools__button--input")}>
+        {variant === "icon" ? (
+          <Settings className="size-4" />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Settings className="size-4" />
+            <span className="text-sm">
+              {models.find((m) => m.value === model)?.name || "Selecciona un modelo"}
+            </span>
+          </div>
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="max-w-[300px] rounded-xl">
+      <DropdownMenuContent className="max-w-[300px] max-h-[250px] overflow-scroll rounded-xl">
         {models.map((model) => (
           <DropdownMenuItem
             key={model.value}

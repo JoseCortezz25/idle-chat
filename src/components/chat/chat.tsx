@@ -70,7 +70,8 @@ export const Chat = () => {
     body: {
       model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH,
       agentName: agentPrompt?.agentName || null,
-      isSearchGrounding
+      isSearchGrounding,
+      apiKey: globalThis?.localStorage?.getItem("apiKey") || ""
     },
     onError: (error) => {
       console.error('Error in chat:', error);

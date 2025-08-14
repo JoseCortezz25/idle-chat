@@ -42,6 +42,24 @@ export const models: Model[] = [
     description: 'Advanced reasoning, coding, and multimodal understanding.',
     value: Models.GEMINI_2_5_FLASH_LITE
   }
+  // {
+  //   name: 'GPT-5',
+  //   provider: 'OpenAI',
+  //   description: 'Advanced reasoning, coding, and multimodal understanding.',
+  //   value: Models.GPT_5
+  // },
+  // {
+  //   name: 'GPT-5 Mini',
+  //   provider: 'OpenAI',
+  //   description: 'Advanced reasoning, coding, and multimodal understanding.',
+  //   value: Models.GPT_5_MINI
+  // },
+  // {
+  //   name: 'GPT-5 Nano',
+  //   provider: 'OpenAI',
+  //   description: 'Advanced reasoning, coding, and multimodal understanding.',
+  //   value: Models.GPT_NANO
+  // }
 ];
 
 export const agents: Agent[] = [

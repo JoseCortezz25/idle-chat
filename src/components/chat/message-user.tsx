@@ -88,7 +88,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete, isLoading }: 
 
         {isEditing ? (
           <div
-            className="bg-accent relative flex min-w-[300px] flex-col gap-2 rounded-3xl px-5 pb-2.5 pt-3.5"
+            className="w-full bg-accent relative flex min-w-[300px] flex-col gap-2 rounded-3xl px-5 pb-2.5 pt-3.5"
             style={{
               width: contentRef.current?.offsetWidth
             }}

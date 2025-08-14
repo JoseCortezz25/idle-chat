@@ -4,15 +4,14 @@ import { PromptInputAction, PromptInputActions, PromptInputTextarea } from "@/co
 import { PromptInput } from "@/components/ui/prompt-input";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, File, Square, X } from "lucide-react";
-import { ModelDropdown } from "@/components/chat/model-dropdown";
 import { ChangeEvent, Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
-import { Models } from "@/lib/types";
 import { Globe } from "@/components/fundations/icons";
 import { cn } from "@/lib/utils";
 import { ChatRequestOptions } from "ai";
 import { usePathname } from "next/navigation";
 import { InputUploadFiles } from "@/components/prompt-textarea/input-upload-files";
 import { PreviewImage } from "@/components/prompt-textarea/preview-image";
+import { useChat } from "@/stores/use-chat";
 
 interface PromptTextarea {
   inputValue: string;
@@ -40,7 +39,7 @@ export const PromptTextarea = ({
   setFiles
 }: PromptTextarea) => {
   /* eslint-disable-next-line */
-  const [model, setModel] = useState(globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH_PREVIEW_04_17);
+  const { replyMessage, setReply } = useChat();
   const isDisabled = inputValue.length === 0;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -59,10 +58,6 @@ export const PromptTextarea = ({
     }
   }, [files]);
 
-  const handleModelChange = (model: string) => {
-    setModel(model);
-    globalThis?.localStorage?.setItem("model", model);
-  };
 
   const handleFileRemove = (file: File) => {
     if (!files) return;
@@ -101,6 +96,15 @@ export const PromptTextarea = ({
       onSubmit={handleSubmitInput}
       className="w-full rounded-xl pt-3"
     >
+      {replyMessage && (
+        <div className="flex items-center gap-2 m-1 bg-brand-green/10 rounded-xl p-2">
+          <span className="text-sm text-brand-green font-semibold line-clamp-2">{replyMessage}</span>
+          <button className="cursor-pointer" onClick={() => setReply('')}>
+            <X className="size-4 text-brand-green hover:bg-brand-green/10 hover:text-brand-green-light rounded-full p-0.5" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         {files && files.length > 0 &&
           <div className="flex items-center gap-2 pb-1.5">
@@ -114,7 +118,7 @@ export const PromptTextarea = ({
                     onRemove={() => handleFileRemove(file)}
                   />
                 );
-              } 
+              }
 
               if (file.type.startsWith('application/pdf')) {
                 return (
@@ -150,10 +154,6 @@ export const PromptTextarea = ({
                 <InputUploadFiles setFiles={setFiles} fileInputRef={fileInputRef} />
               </PromptInputAction>
             )}
-
-            <PromptInputAction tooltip="Select Model">
-              <ModelDropdown setModel={handleModelChange} />
-            </PromptInputAction>
 
             <PromptInputAction tooltip="Search in the web">
               <button

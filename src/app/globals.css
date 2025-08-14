@@ -154,6 +154,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  --color-dark-green: #223327;
   --color-brand-green: #537d5d;
   --color-brand-green-light: #9ebc8a;
 }
@@ -215,7 +216,8 @@
       @apply border-b border-gray-200;
     }
 
-    th, td {
+    th,
+    td {
       @apply p-2;
     }
   }
@@ -273,5 +275,17 @@
 }
 
 .suggestion-button {
-  @apply border rounded-full text-gray-600 border-gray-200 bg-white hover:bg-gray-50 text-xs h-10 px-3 flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all duration-200 ease-in-out active:scale-95 cursor-pointer;
+  @apply flex h-10 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 text-xs text-gray-600 shadow-sm transition-all duration-200 ease-in-out hover:bg-gray-50 hover:shadow-md active:scale-95;
+}
+
+.btn-standard {
+  @apply flex min-h-[40px] min-w-[40px] cursor-pointer items-center justify-center rounded-full p-2 text-gray-500 transition-colors duration-200 ease-in-out hover:bg-gray-100;
+}
+
+.form-settings {
+  @apply flex flex-col gap-6 md:gap-4;
+}
+
+.row-field {
+  @apply flex flex-col gap-2;
 }

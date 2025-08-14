@@ -6,13 +6,10 @@ import {
   createGoogleGenerativeAI,
   GoogleGenerativeAIProviderOptions
 } from '@ai-sdk/google';
+// import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 
 export const maxDuration = 60;
-
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY
-});
 
 function errorHandler(error: unknown) {
   if (error == null) {
@@ -30,9 +27,22 @@ function errorHandler(error: unknown) {
   return JSON.stringify(error);
 }
 
+// const getModel = (config: ModelConfig) => {
+//   if (config.provider === 'OpenAI') {
+//     const openai = createOpenAI({ apiKey: config.apiKey });
+//     const model = openai(`${config.model}`);
+//     return model;
+//   }
+
+//   const google = createGoogleGenerativeAI({ apiKey: config.apiKey });
+//   const model = google(`${config.model}`);
+//   return model;
+// };
+
 export async function POST(req: Request) {
   try {
-    const { messages, model, agentName, isSearchGrounding } = await req.json();
+    const { messages, model, apiKey, agentName, isSearchGrounding } =
+      await req.json();
     const currentAgent = agents.find(agent => agent.agentName === agentName);
 
     if (currentAgent?.agentName === 'fact-checker') {
@@ -51,7 +61,8 @@ export async function POST(req: Request) {
     const defaultTools = { generateImageTool }; // Tools for all agents
     const tools = { ...defaultTools, ...(currentAgent?.tools || {}) };
 
-    console.log('tools', tools);
+    const google = createGoogleGenerativeAI({ apiKey });
+
     const result = streamText({
       model: google(model, {
         useSearchGrounding: isSearchGrounding,

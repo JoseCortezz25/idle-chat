@@ -5,9 +5,11 @@ import { BookMarkedIcon, Check, Copy, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Message as MessageAISDK } from 'ai';
 import { Markdown } from '../ui/markdown';
+import { TextSelectionPopoverAsk } from '@/components/ui/text-selection-popover-ask';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
 import { TextShimmer } from '../ui/text-shimmer';
+import { useChat } from '@/stores/use-chat';
 
 type FileUIPart = {
   type: 'file';
@@ -28,8 +30,8 @@ export const MessageAssistant = ({
   onShowCanvas,
   onReload
 }: MessageAssistantProps) => {
-  const [copyMessage, setCopyMessage] = useState<string | null>(null);  
-
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const { setReply } = useChat();
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -65,9 +67,11 @@ export const MessageAssistant = ({
         )}
 
         {message.content && (
-          <Markdown className="message-content">
-            {message.content}
-          </Markdown>
+          <TextSelectionPopoverAsk onAsk={(value) => setReply(value)}>
+            <Markdown className="message-content">
+              {message.content}
+            </Markdown>
+          </TextSelectionPopoverAsk>
         )}
 
         {fileParts && (
@@ -80,11 +84,11 @@ export const MessageAssistant = ({
           <div className="flex flex-col gap-2">
             {toolInvocationParts.map((toolInvocation) => {
               const toolCallId = toolInvocation.toolInvocation.toolCallId;
-              
+
               switch (toolInvocation.toolInvocation.toolName) {
                 case 'showPromptInCanvas': {
                   switch (toolInvocation.toolInvocation.state) {
-                    case 'call':  
+                    case 'call':
                       return (
                         <TextShimmer>
                           Writing prompt...
@@ -133,7 +137,7 @@ export const MessageAssistant = ({
             className="group/item"
             onClick={() => handleCopy(message.content)}
           >
-            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500"/>}
+            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500" />}
           </Button>
 
           <Button
@@ -142,7 +146,7 @@ export const MessageAssistant = ({
             className="group/item"
             onClick={() => onReload()}
           >
-            <RefreshCcw className="group-hover/item:rotate-180 transition-transform duration-700"/>
+            <RefreshCcw className="group-hover/item:rotate-180 transition-transform duration-700" />
           </Button>
         </MessageActions>
       </div>

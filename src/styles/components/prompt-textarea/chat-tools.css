@@ -12,7 +12,15 @@
 }
 
 .chat-tools__button {
-  @apply cursor-pointer p-2 rounded-lg hover:bg-brand-green-light/10 hover:text-brand-green text-gray-500 transition-colors duration-200;
+  @apply hover:bg-brand-green-light/10 hover:text-brand-green cursor-pointer rounded-lg p-2 text-gray-500 transition-colors duration-200;
+}
+
+.chat-tools__button--input {
+  @apply rounded-md border border-neutral-200 bg-transparent px-3 py-2 text-neutral-500 text-neutral-900;
+
+  svg {
+    @apply size-4 text-neutral-500;
+  }
 }
 
 .chat-tools__button--active {
