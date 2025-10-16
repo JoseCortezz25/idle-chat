@@ -76,11 +76,11 @@ export async function POST(req: Request) {
       })
     });
 
-    return result.toDataStreamResponse({
+    return result.toUIMessageStreamResponse({
       sendSources: true,
       sendReasoning: true,
       sendUsage: true,
-      getErrorMessage: errorHandler
+      onError: errorHandler
     });
   } catch (error) {
     console.error('Error in chat API:', error);

@@ -18,7 +18,11 @@ export async function generateImage(prompt: string) {
       messages: [
         {
           role: 'user',
-          content: generateImageToolPrompt(prompt)
+
+          parts: [{
+            type: 'text',
+            text: generateImageToolPrompt(prompt)
+          }]
         }
       ]
     });

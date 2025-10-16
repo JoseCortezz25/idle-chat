@@ -53,12 +53,12 @@ export const Chat = () => {
     setAgentPrompt(agent || null);
   };
 
+  const [input, setInput] = useState('');
+
   const {
     messages,
     setMessages,
-    input,
     setInput,
-    handleInputChange,
     handleSubmit,
     status,
     append,
@@ -66,6 +66,7 @@ export const Chat = () => {
     error,
     reload
   } = useChat({
+    /* FIXME(@ai-sdk-upgrade-v5): The maxSteps parameter has been removed from useChat. You should now use server-side `stopWhen` conditions for multi-step tool execution control. https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#maxsteps-removal */
     maxSteps: 1,
     body: {
       model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH_PREVIEW_04_17,
@@ -195,18 +196,17 @@ export const Chat = () => {
 
           <PromptTextarea
             inputValue={input}
-            handleInputChange={handleInputChange}
-            handleSubmit={handleSubmit}
-            isLoading={status === 'submitted' || status === 'streaming'}
-            stop={stop}
-            setIsSearchGrounding={setIsSearchGrounding}
-            isSearchGrounding={isSearchGrounding}
-            files={files}
-            setFiles={setFiles}
+            e => setInput(e.target.value)={e => setInput(e.target.value)}
+          handleSubmit={handleSubmit}
+          isLoading={status === 'submitted' || status === 'streaming'}
+          stop={stop}
+          setIsSearchGrounding={setIsSearchGrounding}
+          isSearchGrounding={isSearchGrounding}
+          files={files}
+          setFiles={setFiles}
           />
         </div>
       </motion.section>
-
       {/* TODO: Add artifact panel */}
       <AnimatePresence>
         {isArtifactPanelOpen && (

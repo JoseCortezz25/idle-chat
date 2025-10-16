@@ -4,12 +4,12 @@ import { Message, MessageActions, MessageContent } from '@/components/ui/message
 import { cn } from '@/lib/utils';
 import { Check, Copy, File, Pencil, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Attachment, Message as MessageAISDK } from 'ai';
+import type { Attachment, UIMessage as MessageAISDK } from 'ai';
 import { useRef, useState } from 'react';
 import { PreviewAttachments } from '@/components/modals/preview-attachments-modal';
 
 interface MessageUserProps {
-  message: MessageAISDK;
+  message: undefined;
   onEdit: (id: string, newText: string) => void;
   onReload: () => void;
   onDelete: (id: string) => void;
@@ -21,7 +21,9 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
   const [isEditing, setIsEditing] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);  
+  /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
   const imageAttachments = message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('image/'));
+  /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
   const filesAttachments = message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('application/pdf'));
 
 

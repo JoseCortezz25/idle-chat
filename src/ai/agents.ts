@@ -9,7 +9,7 @@ import {
   yodaSystemPrompt
 } from '@/ai/prompts';
 import { Agent, Model, Models } from '../lib/types';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { n8nContext } from './contexts/n8n-context';
 
 export type AgentNames =
@@ -52,7 +52,7 @@ export const agents: Agent[] = [
     tools: {
       showPromptInCanvas: {
         description: 'This tool is used to show a prompt generator.',
-        parameters: z.object({
+        inputSchema: z.object({
           prompt: z
             .string()
             .describe(
@@ -93,7 +93,7 @@ export const agents: Agent[] = [
     tools: {
       showWorkflowInCanvas: {
         description: 'This tool is used to show a workflow in the canvas.',
-        parameters: z.object({
+        inputSchema: z.object({
           workflow: z.string()
         }),
         execute: async ({ workflow }) => {

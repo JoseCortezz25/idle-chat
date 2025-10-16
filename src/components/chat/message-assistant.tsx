@@ -3,7 +3,7 @@
 import { Message, MessageActions } from '@/components/ui/message';
 import { BookMarkedIcon, Check, Copy, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Message as MessageAISDK } from 'ai';
+import type { UIMessage as MessageAISDK } from 'ai';
 import { Markdown } from '../ui/markdown';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
@@ -16,8 +16,8 @@ type FileUIPart = {
 };
 
 interface MessageAssistantProps {
-  message: MessageAISDK;
-  parts: MessageAISDK["parts"];
+  message: undefined;
+  parts: undefined["parts"];
   onReload: () => void;
   onShowCanvas: (isShowing: boolean) => void;
 }
@@ -58,9 +58,9 @@ export const MessageAssistant = ({
       className="group justify-start"
     >
       <div className="max-w-full flex-1 sm:max-w-[75%] space-y-2 flex flex-col">
-        {reasoningParts && reasoningParts.reasoning && (
+        {reasoningParts && reasoningParts.reasoningText && (
           <div className="bg-transparent text-foreground">
-            {reasoningParts.reasoning}
+            {reasoningParts.reasoningText}
           </div>
         )}
 
