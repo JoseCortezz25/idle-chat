@@ -81,14 +81,16 @@ export const PromptTextarea = ({
   const isHome = usePathname() === "/";
 
   const handleSubmitInput = () => {
-    if (files && files.length > 0) {
-      /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
-      handleSubmit({}, {
-        experimental_attachments: files
-      });
-    } else {
-      handleSubmit();
-    }
+    // TODO: Implement file upload with AI SDK 5 parts array
+    // For now, files are not being sent until we implement proper conversion
+    // if (files && files.length > 0) {
+    //   // Need to convert FileList to file parts
+    //   handleSubmit({}, {
+    //     // TODO: Add file parts to request
+    //   });
+    // } else {
+    handleSubmit();
+    // }
 
     setFiles(undefined);
 
@@ -115,7 +117,7 @@ export const PromptTextarea = ({
                     onRemove={() => handleFileRemove(file)}
                   />
                 );
-              } 
+              }
 
               if (file.type.startsWith('application/pdf')) {
                 return (

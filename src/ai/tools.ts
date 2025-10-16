@@ -1,6 +1,6 @@
 import { generateImage } from '@/app/actions/generate-image';
 import { tool } from 'ai';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 
 // TODO: Implement this tool to generate an image
 const generateImageTool = tool({

@@ -8,6 +8,7 @@ import { Markdown } from '../ui/markdown';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
 import { TextShimmer } from '../ui/text-shimmer';
+import { getMessageText } from '@/lib/message-utils';
 
 type FileUIPart = {
   type: 'file';
@@ -28,7 +29,7 @@ export const MessageAssistant = ({
   onShowCanvas,
   onReload
 }: MessageAssistantProps) => {
-  const [copyMessage, setCopyMessage] = useState<string | null>(null);  
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
 
   const handleCopy = (content: string) => {
@@ -40,8 +41,9 @@ export const MessageAssistant = ({
     }, 2000);
   };
 
+  // Tool invocations now use tool-{toolName} type pattern
   const toolInvocationParts = parts?.filter(
-    (part) => part.type === "tool-invocation"
+    (part) => part.type.startsWith("tool-")
   );
 
   const sourceParts = parts?.filter(
@@ -51,6 +53,8 @@ export const MessageAssistant = ({
   const reasoningParts = parts?.find((part) => part.type === "reasoning");
 
   const fileParts: FileUIPart | undefined = parts?.find((part) => part.type === "file");
+
+  const textContent = getMessageText(message);
 
   return (
     <Message
@@ -64,9 +68,9 @@ export const MessageAssistant = ({
           </div>
         )}
 
-        {message.content && (
+        {textContent && (
           <Markdown className="message-content">
-            {message.content}
+            {textContent}
           </Markdown>
         )}
 
@@ -78,20 +82,23 @@ export const MessageAssistant = ({
 
         {toolInvocationParts && toolInvocationParts.length > 0 && (
           <div className="flex flex-col gap-2">
-            {toolInvocationParts.map((toolInvocation) => {
-              const toolCallId = toolInvocation.toolInvocation.toolCallId;
+            {toolInvocationParts.map((toolInvocation: any) => {
+              const toolCallId = toolInvocation.toolCallId;
+              const toolName = toolInvocation.type.replace('tool-', '');
               
-              switch (toolInvocation.toolInvocation.toolName) {
+              switch (toolName) {
                 case 'showPromptInCanvas': {
-                  switch (toolInvocation.toolInvocation.state) {
-                    case 'call':  
+                  // States: input-streaming, input-available, output-available, output-error
+                  switch (toolInvocation.state) {
+                    case 'input-streaming':
+                    case 'input-available':  
                       return (
-                        <TextShimmer>
+                        <TextShimmer key={toolCallId}>
                           Writing prompt...
                         </TextShimmer>
                       );
 
-                    case 'result': {
+                    case 'output-available': {
                       return (
                         <button
                           key={toolCallId}
@@ -131,9 +138,9 @@ export const MessageAssistant = ({
             variant="ghost"
             size="icon"
             className="group/item"
-            onClick={() => handleCopy(message.content)}
+            onClick={() => handleCopy(textContent)}
           >
-            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500"/>}
+            {copyMessage === textContent ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500" />}
           </Button>
 
           <Button
@@ -142,7 +149,7 @@ export const MessageAssistant = ({
             className="group/item"
             onClick={() => onReload()}
           >
-            <RefreshCcw className="group-hover/item:rotate-180 transition-transform duration-700"/>
+            <RefreshCcw className="group-hover/item:rotate-180 transition-transform duration-700" />
           </Button>
         </MessageActions>
       </div>

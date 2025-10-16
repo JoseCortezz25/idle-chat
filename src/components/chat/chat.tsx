@@ -12,6 +12,7 @@ import { Button } from '../ui/button';
 import { motion, AnimatePresence } from 'motion/react';
 import { Canvas } from './canvas';
 import { useFileStore } from '@/stores/use-file';
+import { getMessageText } from '@/lib/message-utils';
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -66,8 +67,7 @@ export const Chat = () => {
     error,
     reload
   } = useChat({
-    /* FIXME(@ai-sdk-upgrade-v5): The maxSteps parameter has been removed from useChat. You should now use server-side `stopWhen` conditions for multi-step tool execution control. https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#maxsteps-removal */
-    maxSteps: 1,
+    // maxSteps removed - now controlled server-side with stopWhen
     body: {
       model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH_PREVIEW_04_17,
       agentName: agentPrompt?.agentName || null,
@@ -77,9 +77,10 @@ export const Chat = () => {
       console.error('Error in chat:', error);
     },
     onToolCall({ toolCall }) {
+      // In AI SDK 5, onToolCall uses 'input' instead of 'args'
       if (toolCall.toolName === 'showPromptInCanvas') {
         setIsArtifactPanelOpen(true);
-        setArtifactValue((toolCall.args as { prompt: string }).prompt);
+        setArtifactValue((toolCall.input as { prompt: string }).prompt);
       }
     }
   });
@@ -87,12 +88,12 @@ export const Chat = () => {
   useEffect(() => {
     const prompt = searchParams.get("prompt");
     if (!prompt) return;
-    const isMessageExists = messages.some(message => message.content === prompt);
+    const isMessageExists = messages.some(message => getMessageText(message) === prompt);
 
     if (!isMessageExists) {
       append({
         role: "user",
-        content: prompt
+        parts: [{ type: "text", text: prompt }]
       });
     }
   }, [searchParams]);
@@ -123,7 +124,7 @@ export const Chat = () => {
   const handleEdit = useCallback((id: string, newText: string) => {
     setMessages(
       messages.map((message) =>
-        message.id === id ? { ...message, content: newText } : message
+        message.id === id ? { ...message, parts: [{ type: "text", text: newText }] } : message
       )
     );
   },
@@ -196,14 +197,14 @@ export const Chat = () => {
 
           <PromptTextarea
             inputValue={input}
-            e => setInput(e.target.value)={e => setInput(e.target.value)}
-          handleSubmit={handleSubmit}
-          isLoading={status === 'submitted' || status === 'streaming'}
-          stop={stop}
-          setIsSearchGrounding={setIsSearchGrounding}
-          isSearchGrounding={isSearchGrounding}
-          files={files}
-          setFiles={setFiles}
+            handleInputChange={(e) => setInput(e.target.value)}
+            handleSubmit={handleSubmit}
+            isLoading={status === 'submitted' || status === 'streaming'}
+            stop={stop}
+            setIsSearchGrounding={setIsSearchGrounding}
+            isSearchGrounding={isSearchGrounding}
+            files={files}
+            setFiles={setFiles}
           />
         </div>
       </motion.section>

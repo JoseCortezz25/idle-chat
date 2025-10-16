@@ -6,7 +6,8 @@ import {
   createGoogleGenerativeAI,
   GoogleGenerativeAIProviderOptions
 } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { streamText, convertToModelMessages, type UIMessage } from 'ai';
+import { getMessageText } from '@/lib/message-utils';
 
 export const maxDuration = 60;
 
@@ -35,14 +36,18 @@ export async function POST(req: Request) {
     const { messages, model, agentName, isSearchGrounding } = await req.json();
     const currentAgent = agents.find(agent => agent.agentName === agentName);
 
+    // Work with UIMessages
+    let uiMessages: UIMessage[] = messages;
+
     if (currentAgent?.agentName === 'fact-checker') {
-      const factCheckerPrompt = getFactCheckerPrompt(
-        messages[messages.length - 1].content
-      );
-      messages.push({
+      const lastMessage = uiMessages[uiMessages.length - 1];
+      const lastMessageText = getMessageText(lastMessage);
+      const factCheckerPrompt = getFactCheckerPrompt(lastMessageText);
+      
+      uiMessages = [...uiMessages, {
         role: 'user',
-        content: factCheckerPrompt
-      });
+        parts: [{ type: 'text', text: factCheckerPrompt }]
+      }];
     }
 
     const systemPrompt =
@@ -62,7 +67,7 @@ export async function POST(req: Request) {
         })
       }),
       system: systemPrompt,
-      messages,
+      messages: convertToModelMessages(uiMessages),
       tools,
       temperature: defaultConfig.temperature,
       ...(model !== Models.GEMINI_2_0_FLASH_EXP && {
@@ -77,6 +82,7 @@ export async function POST(req: Request) {
     });
 
     return result.toUIMessageStreamResponse({
+      originalMessages: messages,
       sendSources: true,
       sendReasoning: true,
       sendUsage: true,

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { Attachment, UIMessage as MessageAISDK } from 'ai';
 import { useRef, useState } from 'react';
 import { PreviewAttachments } from '@/components/modals/preview-attachments-modal';
+import { getMessageText } from '@/lib/message-utils';
 
 interface MessageUserProps {
   message: undefined;
@@ -16,15 +17,21 @@ interface MessageUserProps {
 }
 
 export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUserProps) => {
+  const textContent = getMessageText(message);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
-  const [editInput, setEditInput] = useState(message.content);
+  const [editInput, setEditInput] = useState(textContent);
   const [isEditing, setIsEditing] = useState(false);
 
-  const contentRef = useRef<HTMLDivElement>(null);  
-  /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
-  const imageAttachments = message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('image/'));
-  /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
-  const filesAttachments = message.experimental_attachments?.filter(attachment => attachment.contentType?.startsWith('application/pdf'));
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Get file parts from message
+  const imageAttachments = message.parts?.filter(part =>
+    part.type === 'file' && (part as any).mediaType?.startsWith('image/')
+  ) as any[];
+
+  const filesAttachments = message.parts?.filter(part =>
+    part.type === 'file' && (part as any).mediaType?.startsWith('application/pdf')
+  ) as any[];
 
 
   const handleCopy = (content: string) => {
@@ -38,7 +45,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
 
   const handleEditCancel = () => {
     setIsEditing(false);
-    setEditInput(message.content);
+    setEditInput(textContent);
   };
 
   const handleSave = () => {
@@ -66,11 +73,11 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
           {imageAttachments && imageAttachments.map((attachment, index) => (
             <PreviewAttachments
               key={`${message.id}-${index}`}
-              image={attachment.url}
+              image={(attachment as any).url}
             >
               <img
-                src={attachment.url}
-                alt={attachment.name}
+                src={(attachment as any).url}
+                alt={(attachment as any).name || 'image'}
                 className="w-full h-full object-cover cursor-pointer"
               />
             </PreviewAttachments>
@@ -78,12 +85,12 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
         </div>
 
         <div>
-          {filesAttachments && filesAttachments.map((attachment: Attachment, index) => (   
+          {filesAttachments && filesAttachments.map((attachment: any, index) => (
             <div className="bg-brand-green-light/10 rounded-md p-2 flex items-center gap-3 cursor-pointer" key={`${message.id}-${index}`}>
               <div className="w-[45px] h-[45px] rounded-md bg-brand-green/10 text-brand-green flex items-center justify-center">
                 <File className="size-5" />
               </div>
-              <span className="text-sm text-brand-green font-semibold mr-1">{attachment.name}</span>
+              <span className="text-sm text-brand-green font-semibold mr-1">{attachment.name || 'file.pdf'}</span>
             </div>
           ))}
         </div>
@@ -121,7 +128,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
           </div>
         ) : (
           <MessageContent className="bg-gray-100/60 text-foreground px-[16px] py-[12px] rounded-[15px] !rounded-tr-[0px]">
-            {message.content}
+            {textContent}
           </MessageContent>
         )}
 
@@ -134,9 +141,9 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
             variant="ghost"
             size="icon"
             className="group/item"
-            onClick={() => handleCopy(message.content)}
+            onClick={() => handleCopy(textContent)}
           >
-            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500"/>}
+            {copyMessage === textContent ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500" />}
           </Button>
 
           <Button
@@ -145,7 +152,7 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
             className="group/item hover:bg-red-500/10 transition-all duration-500"
             onClick={handleDelete}
           >
-            <Trash className="size-4 group-hover/item:text-red-500 transition-transform duration-500"/>
+            <Trash className="size-4 group-hover/item:text-red-500 transition-transform duration-500" />
           </Button>
 
           <Button
