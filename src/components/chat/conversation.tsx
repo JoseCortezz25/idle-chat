@@ -27,6 +27,8 @@ export const Conversation = ({
   onShowCanvas
 }: ConversationProps) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  console.log("Messages", messages);
+
 
   return (
     <ChatContainer
@@ -51,7 +53,7 @@ export const Conversation = ({
 
         return (
           <MessageUser
-            key={`${message.id}-${message.createdAt}`}
+            key={message.id}
             message={message}
             onEdit={onEdit}
             onReload={reload}

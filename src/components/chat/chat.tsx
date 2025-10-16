@@ -1,7 +1,7 @@
 "use client";
 
 import { PromptTextarea } from '@/components/chat/prompt-textarea';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { useSearchParams } from 'next/navigation';
 import { Agent, Models } from '@/lib/types';
@@ -12,7 +12,9 @@ import { Button } from '../ui/button';
 import { motion, AnimatePresence } from 'motion/react';
 import { Canvas } from './canvas';
 import { useFileStore } from '@/stores/use-file';
+import { DefaultChatTransport } from 'ai';
 import { getMessageText } from '@/lib/message-utils';
+import { createFileParts } from '@/lib/utils';
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -56,34 +58,17 @@ export const Chat = () => {
 
   const [input, setInput] = useState('');
 
-  const {
-    messages,
-    setMessages,
-    setInput,
-    handleSubmit,
-    status,
-    append,
-    stop,
-    error,
-    reload
-  } = useChat({
-    // maxSteps removed - now controlled server-side with stopWhen
-    body: {
-      model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH_PREVIEW_04_17,
-      agentName: agentPrompt?.agentName || null,
-      isSearchGrounding
-    },
-    onError: (error) => {
-      console.error('Error in chat:', error);
-    },
-    onToolCall({ toolCall }) {
-      // In AI SDK 5, onToolCall uses 'input' instead of 'args'
-      if (toolCall.toolName === 'showPromptInCanvas') {
-        setIsArtifactPanelOpen(true);
-        setArtifactValue((toolCall.input as { prompt: string }).prompt);
+  const { messages, status, error, sendMessage, stop, regenerate, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: {
+        model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH,
+        agentName: agentPrompt?.agentName || null,
+        isSearchGrounding
       }
-    }
+    })
   });
+
 
   useEffect(() => {
     const prompt = searchParams.get("prompt");
@@ -91,7 +76,7 @@ export const Chat = () => {
     const isMessageExists = messages.some(message => getMessageText(message) === prompt);
 
     if (!isMessageExists) {
-      append({
+      sendMessage({
         role: "user",
         parts: [{ type: "text", text: prompt }]
       });
@@ -119,6 +104,26 @@ export const Chat = () => {
 
   const toggleArtifactPanel = () => {
     setIsArtifactPanelOpen(prev => !prev);
+  };
+
+
+  const handleSubmit = async (images?: FileList) => {
+    if (images) {
+      const imagePromises = createFileParts(images);
+      const imageParts = await Promise.all(imagePromises);
+
+      const messageWithImages = {
+        role: 'user' as const,
+        parts: [
+          { type: 'text' as const, text: input },
+          ...imageParts
+        ]
+      };
+      sendMessage(messageWithImages);
+    } else {
+      sendMessage({ text: input });
+    }
+    setInput('');
   };
 
   const handleEdit = useCallback((id: string, newText: string) => {
@@ -173,7 +178,7 @@ export const Chat = () => {
             messages={messages}
             status={status}
             error={error}
-            reload={reload}
+            reload={regenerate}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onShowCanvas={setIsArtifactPanelOpen}

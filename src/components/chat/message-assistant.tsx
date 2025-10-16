@@ -3,7 +3,7 @@
 import { Message, MessageActions } from '@/components/ui/message';
 import { BookMarkedIcon, Check, Copy, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { UIMessage as MessageAISDK } from 'ai';
+import type { ReasoningUIPart, SourceDocumentUIPart, SourceUrlUIPart, UIMessage } from 'ai';
 import { Markdown } from '../ui/markdown';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
@@ -17,8 +17,8 @@ type FileUIPart = {
 };
 
 interface MessageAssistantProps {
-  message: undefined;
-  parts: undefined["parts"];
+  message: UIMessage;
+  parts: UIMessage["parts"];
   onReload: () => void;
   onShowCanvas: (isShowing: boolean) => void;
 }
@@ -47,24 +47,24 @@ export const MessageAssistant = ({
   );
 
   const sourceParts = parts?.filter(
-    (part) => part.type === "source"
-  );
+    (part) => part.type === "source-url" || part.type === "source-document"
+  ) as SourceUrlUIPart[] | SourceDocumentUIPart[] | undefined;
 
-  const reasoningParts = parts?.find((part) => part.type === "reasoning");
+  const reasoningParts = parts?.find((part) => part.type === "reasoning") as ReasoningUIPart | undefined;
 
-  const fileParts: FileUIPart | undefined = parts?.find((part) => part.type === "file");
+  const fileParts: FileUIPart | undefined = parts?.find((part) => part.type === "file") as FileUIPart | undefined;
 
   const textContent = getMessageText(message);
-
+  console.log("sourceParts", sourceParts);
   return (
     <Message
       key={message.id}
       className="group justify-start"
     >
       <div className="max-w-full flex-1 sm:max-w-[75%] space-y-2 flex flex-col">
-        {reasoningParts && reasoningParts.reasoningText && (
+        {reasoningParts && reasoningParts.text && (
           <div className="bg-transparent text-foreground">
-            {reasoningParts.reasoningText}
+            {reasoningParts.text}
           </div>
         )}
 
@@ -82,16 +82,16 @@ export const MessageAssistant = ({
 
         {toolInvocationParts && toolInvocationParts.length > 0 && (
           <div className="flex flex-col gap-2">
-            {toolInvocationParts.map((toolInvocation: any) => {
-              const toolCallId = toolInvocation.toolCallId;
+            {toolInvocationParts.map((toolInvocation: ToolInvocationUIPart) => {
+              const toolCallId = toolInvocation.input.toolCallId;
               const toolName = toolInvocation.type.replace('tool-', '');
-              
+
               switch (toolName) {
                 case 'showPromptInCanvas': {
                   // States: input-streaming, input-available, output-available, output-error
                   switch (toolInvocation.state) {
                     case 'input-streaming':
-                    case 'input-available':  
+                    case 'input-available':
                       return (
                         <TextShimmer key={toolCallId}>
                           Writing prompt...

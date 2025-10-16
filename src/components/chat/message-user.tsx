@@ -4,13 +4,13 @@ import { Message, MessageActions, MessageContent } from '@/components/ui/message
 import { cn } from '@/lib/utils';
 import { Check, Copy, File, Pencil, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Attachment, UIMessage as MessageAISDK } from 'ai';
+import type { FileUIPart, UIMessage } from 'ai';
 import { useRef, useState } from 'react';
 import { PreviewAttachments } from '@/components/modals/preview-attachments-modal';
 import { getMessageText } from '@/lib/message-utils';
 
 interface MessageUserProps {
-  message: undefined;
+  message: UIMessage;
   onEdit: (id: string, newText: string) => void;
   onReload: () => void;
   onDelete: (id: string) => void;
@@ -26,12 +26,12 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
 
   // Get file parts from message
   const imageAttachments = message.parts?.filter(part =>
-    part.type === 'file' && (part as any).mediaType?.startsWith('image/')
-  ) as any[];
+    part.type === 'file' && (part as FileUIPart).mediaType?.startsWith('image/')
+  ) as FileUIPart[];
 
   const filesAttachments = message.parts?.filter(part =>
-    part.type === 'file' && (part as any).mediaType?.startsWith('application/pdf')
-  ) as any[];
+    part.type === 'file' && (part as FileUIPart).mediaType?.startsWith('application/pdf')
+  ) as FileUIPart[];
 
 
   const handleCopy = (content: string) => {
@@ -73,11 +73,11 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
           {imageAttachments && imageAttachments.map((attachment, index) => (
             <PreviewAttachments
               key={`${message.id}-${index}`}
-              image={(attachment as any).url}
+              image={(attachment as FileUIPart).url}
             >
               <img
-                src={(attachment as any).url}
-                alt={(attachment as any).name || 'image'}
+                src={(attachment as FileUIPart).url}
+                alt={(attachment as FileUIPart).filename || 'image'}
                 className="w-full h-full object-cover cursor-pointer"
               />
             </PreviewAttachments>
@@ -85,19 +85,19 @@ export const MessageUser = ({ message, onEdit, onReload, onDelete }: MessageUser
         </div>
 
         <div>
-          {filesAttachments && filesAttachments.map((attachment: any, index) => (
+          {filesAttachments && filesAttachments.map((attachment: FileUIPart, index) => (
             <div className="bg-brand-green-light/10 rounded-md p-2 flex items-center gap-3 cursor-pointer" key={`${message.id}-${index}`}>
               <div className="w-[45px] h-[45px] rounded-md bg-brand-green/10 text-brand-green flex items-center justify-center">
                 <File className="size-5" />
               </div>
-              <span className="text-sm text-brand-green font-semibold mr-1">{attachment.name || 'file.pdf'}</span>
+              <span className="text-sm text-brand-green font-semibold mr-1">{attachment.filename || 'file.pdf'}</span>
             </div>
           ))}
         </div>
 
         {isEditing ? (
           <div
-            className="bg-accent relative flex min-w-[180px] flex-col gap-2 rounded-3xl px-5 pb-2.5 pt-3.5"
+            className="bg-accent relative flex min-w-[180px] flex-col gap-2 rounded-3xl px-5 pb-2.5 pt-3.5 w-full"
             style={{
               width: contentRef.current?.offsetWidth
             }}

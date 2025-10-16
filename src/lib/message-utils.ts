@@ -1,4 +1,4 @@
-import type { UIMessage } from 'ai';
+import type { FileUIPart, UIMessage } from 'ai';
 
 /**
  * Extracts the text content from a UIMessage's parts array
@@ -23,7 +23,8 @@ export function getMessageFileParts(message: UIMessage) {
 export function getMessageImageParts(message: UIMessage) {
   return message.parts.filter(
     part =>
-      part.type === 'file' && (part as any).mediaType?.startsWith('image/')
+      part.type === 'file' &&
+      (part as FileUIPart).mediaType?.startsWith('image/')
   );
 }
 
@@ -34,6 +35,6 @@ export function getMessagePdfParts(message: UIMessage) {
   return message.parts.filter(
     part =>
       part.type === 'file' &&
-      (part as any).mediaType?.startsWith('application/pdf')
+      (part as FileUIPart).mediaType?.startsWith('application/pdf')
   );
 }

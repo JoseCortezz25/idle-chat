@@ -11,6 +11,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@ai-sdk-tools/devtools": "^0.8.4",
     "@ai-sdk/google": "^2.0.23",
     "@ai-sdk/openai": "^2.0.52",
     "@ai-sdk/react": "^2.0.72",
@@ -23,7 +24,6 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.2.4",
     "ai": "^5.0.72",
-    "ai-legacy": "npm:ai@^4.3.13",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.10.5",

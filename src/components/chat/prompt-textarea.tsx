@@ -9,7 +9,6 @@ import { ChangeEvent, Dispatch, SetStateAction, useRef, useState, useEffect } fr
 import { Models } from "@/lib/types";
 import { Globe } from "@/components/fundations/icons";
 import { cn } from "@/lib/utils";
-import { ChatRequestOptions } from "ai";
 import { usePathname } from "next/navigation";
 import { InputUploadFiles } from "@/components/prompt-textarea/input-upload-files";
 import { PreviewImage } from "@/components/prompt-textarea/preview-image";
@@ -17,9 +16,7 @@ import { PreviewImage } from "@/components/prompt-textarea/preview-image";
 interface PromptTextarea {
   inputValue: string;
   handleInputChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: (event?: {
-    preventDefault?: () => void;
-  }, chatRequestOptions?: ChatRequestOptions) => void
+  handleSubmit: (images?: FileList) => void
   isLoading: boolean;
   stop?: () => void;
   setIsSearchGrounding: Dispatch<SetStateAction<boolean>>;
@@ -81,16 +78,11 @@ export const PromptTextarea = ({
   const isHome = usePathname() === "/";
 
   const handleSubmitInput = () => {
-    // TODO: Implement file upload with AI SDK 5 parts array
-    // For now, files are not being sent until we implement proper conversion
-    // if (files && files.length > 0) {
-    //   // Need to convert FileList to file parts
-    //   handleSubmit({}, {
-    //     // TODO: Add file parts to request
-    //   });
-    // } else {
-    handleSubmit();
-    // }
+    if (files && files.length > 0) {
+      handleSubmit(files);
+    } else {
+      handleSubmit();
+    }
 
     setFiles(undefined);
 

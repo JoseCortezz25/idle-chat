@@ -37,18 +37,22 @@ export async function POST(req: Request) {
     const currentAgent = agents.find(agent => agent.agentName === agentName);
 
     // Work with UIMessages
-    let uiMessages: UIMessage[] = messages;
+    const uiMessages: UIMessage[] = messages;
 
-    if (currentAgent?.agentName === 'fact-checker') {
-      const lastMessage = uiMessages[uiMessages.length - 1];
-      const lastMessageText = getMessageText(lastMessage);
-      const factCheckerPrompt = getFactCheckerPrompt(lastMessageText);
-      
-      uiMessages = [...uiMessages, {
-        role: 'user',
-        parts: [{ type: 'text', text: factCheckerPrompt }]
-      }];
-    }
+    // if (currentAgent?.agentName === 'fact-checker') {
+    //   const lastMessage = uiMessages[uiMessages.length - 1];
+    //   const lastMessageText = getMessageText(lastMessage);
+    //   const factCheckerPrompt = getFactCheckerPrompt(lastMessageText);
+
+    //   uiMessages = [...uiMessages, {
+    //     role: 'user',
+    //     parts: [{ type: 'text', text: factCheckerPrompt }]
+    //   }];
+    // }
+
+    console.log('model', model);
+    console.log('agentName', agentName);
+    console.log('isSearchGrounding', isSearchGrounding);
 
     const systemPrompt =
       currentAgent?.systemPrompt || defaultConfig.systemPrompt;
@@ -57,15 +61,16 @@ export async function POST(req: Request) {
     const tools = { ...defaultTools, ...(currentAgent?.tools || {}) };
 
     const result = streamText({
-      model: google(model, {
-        useSearchGrounding: isSearchGrounding,
-        ...(currentAgent?.agentName === 'fact-checker' && {
-          dynamicRetrievalConfig: {
-            mode: 'MODE_DYNAMIC' as const,
-            dynamicThreshold: 0
-          }
-        })
-      }),
+      model: google(model),
+      // model: google(model, {
+      //   useSearchGrounding: isSearchGrounding,
+      //   ...(currentAgent?.agentName === 'fact-checker' && {
+      //     dynamicRetrievalConfig: {
+      //       mode: 'MODE_DYNAMIC' as const,
+      //       dynamicThreshold: 0
+      //     }
+      //   })
+      // }),
       system: systemPrompt,
       messages: convertToModelMessages(uiMessages),
       tools,
@@ -85,7 +90,6 @@ export async function POST(req: Request) {
       originalMessages: messages,
       sendSources: true,
       sendReasoning: true,
-      sendUsage: true,
       onError: errorHandler
     });
   } catch (error) {
