@@ -1,7 +1,7 @@
 "use client";
 
 import { PromptTextarea } from '@/components/chat/prompt-textarea';
-import { useState, useEffect, useCallback, FormEvent, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { useSearchParams } from 'next/navigation';
 import { Agent, Models } from '@/lib/types';
@@ -68,7 +68,13 @@ export const Chat = () => {
         agentName: agentPromt.current?.agentName || null,
         isSearchGrounding: isSearchGrounding.current
       })
-    })
+    }),
+    onToolCall: ({ toolCall }) => {
+      if (toolCall.toolName === 'showPromptInCanvas') {
+        setArtifactValue((toolCall.input as { prompt: string }).prompt);
+        setIsArtifactPanelOpen(true);
+      }
+    }
   });
 
   useEffect(() => {

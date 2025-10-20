@@ -3,7 +3,7 @@
 import { Message, MessageActions } from '@/components/ui/message';
 import { BookMarkedIcon, Check, Copy, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { ReasoningUIPart, SourceDocumentUIPart, SourceUrlUIPart, UIDataTypes, UITools, UIMessage, UIMessagePart, UIToolInvocation } from 'ai';
+import type { ReasoningUIPart, SourceDocumentUIPart, SourceUrlUIPart, UIMessage } from 'ai';
 import { Markdown } from '../ui/markdown';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
@@ -46,10 +46,6 @@ export const MessageAssistant = ({
     (part) => part.type.startsWith("tool-")
   );
 
-  console.log('toolInvocationParts', toolInvocationParts);
-  console.log("parts", parts);
-
-
   const sourceParts = parts?.filter(
     (part) => part.type === "source-url" || part.type === "source-document"
   ) as SourceUrlUIPart[] | SourceDocumentUIPart[] | undefined;
@@ -59,7 +55,7 @@ export const MessageAssistant = ({
   const fileParts: FileUIPart | undefined = parts?.find((part) => part.type === "file") as FileUIPart | undefined;
 
   const textContent = getMessageText(message);
-  console.log("sourceParts", sourceParts);
+
   return (
     <Message
       key={message.id}

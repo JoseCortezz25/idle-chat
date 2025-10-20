@@ -34,12 +34,6 @@ function errorHandler(error: unknown) {
 export async function POST(req: Request) {
   try {
     const { messages, model, agentName, isSearchGrounding } = await req.json();
-
-    console.log('--------------------------------');
-    console.log('agentName', agentName);
-    console.log('model', model);
-    const currentAgent = agents.find(agent => agent.agentName === agentName);
-    console.log('--------------------------------');
     // Work with UIMessages
     const uiMessages: UIMessage[] = messages;
 
