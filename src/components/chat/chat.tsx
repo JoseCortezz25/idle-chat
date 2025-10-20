@@ -1,7 +1,7 @@
 "use client";
 
 import { PromptTextarea } from '@/components/chat/prompt-textarea';
-import { useState, useEffect, useCallback, FormEvent } from 'react';
+import { useState, useEffect, useCallback, FormEvent, useMemo, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { useSearchParams } from 'next/navigation';
 import { Agent, Models } from '@/lib/types';
@@ -35,13 +35,15 @@ export const Chat = () => {
   const searchParams = useSearchParams();
   const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState(false);
   const [artifactValue, setArtifactValue] = useState<string | null>(null);
-  const { setAgent } = useAgent();
-  const [agentPrompt, setAgentPrompt] = useState<Agent | null>(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const [isSearchGrounding, setIsSearchGrounding] = useState(false);
   const { files: filesFromHome } = useFileStore();
   const [files, setFiles] = useState<FileList | undefined>(filesFromHome || undefined);
   const [suggestions, setSuggestions] = useState<Agent['suggestions']>([]);
+  const { setAgent } = useAgent();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // This is a wild and gross way to resolve problem using useChat hook when body values is changed. This is a bug from useChat hook.
+  const agentPromt = useRef<Agent | null>(null);
+  const isSearchGrounding = useRef(false);
 
   const handleSelectAgent = (agentName: string) => {
     if (!agentName) return;
@@ -49,11 +51,11 @@ export const Chat = () => {
     const selectedAgent = agents.filter(agent => agent.agentName === agentName);
     const agent = selectedAgent[0];
 
-    if (agent.userSearch) setIsSearchGrounding(true);
+    if (agent.userSearch) isSearchGrounding.current = true;
 
     setSuggestions(agent.suggestions);
     setAgent(agent || null);
-    setAgentPrompt(agent || null);
+    agentPromt.current = agent || null;
   };
 
   const [input, setInput] = useState('');
@@ -61,14 +63,13 @@ export const Chat = () => {
   const { messages, status, error, sendMessage, stop, regenerate, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: {
+      body: () => ({
         model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH,
-        agentName: agentPrompt?.agentName || null,
-        isSearchGrounding
-      }
+        agentName: agentPromt.current?.agentName || null,
+        isSearchGrounding: isSearchGrounding.current
+      })
     })
   });
-
 
   useEffect(() => {
     const prompt = searchParams.get("prompt");
@@ -98,14 +99,13 @@ export const Chat = () => {
     }
 
     if (useSearch) {
-      setIsSearchGrounding(true);
+      isSearchGrounding.current = true;
     }
   }, [searchParams]);
 
   const toggleArtifactPanel = () => {
     setIsArtifactPanelOpen(prev => !prev);
   };
-
 
   const handleSubmit = async (images?: FileList) => {
     if (images) {
@@ -206,8 +206,8 @@ export const Chat = () => {
             handleSubmit={handleSubmit}
             isLoading={status === 'submitted' || status === 'streaming'}
             stop={stop}
-            setIsSearchGrounding={setIsSearchGrounding}
-            isSearchGrounding={isSearchGrounding}
+            setIsSearchGrounding={() => isSearchGrounding.current = !isSearchGrounding.current}
+            isSearchGrounding={isSearchGrounding.current}
             files={files}
             setFiles={setFiles}
           />

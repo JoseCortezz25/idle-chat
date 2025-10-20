@@ -3,7 +3,7 @@
 import { Message, MessageActions } from '@/components/ui/message';
 import { BookMarkedIcon, Check, Copy, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { ReasoningUIPart, SourceDocumentUIPart, SourceUrlUIPart, UIMessage } from 'ai';
+import type { ReasoningUIPart, SourceDocumentUIPart, SourceUrlUIPart, UIDataTypes, UITools, UIMessage, UIMessagePart, UIToolInvocation } from 'ai';
 import { Markdown } from '../ui/markdown';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
@@ -46,6 +46,10 @@ export const MessageAssistant = ({
     (part) => part.type.startsWith("tool-")
   );
 
+  console.log('toolInvocationParts', toolInvocationParts);
+  console.log("parts", parts);
+
+
   const sourceParts = parts?.filter(
     (part) => part.type === "source-url" || part.type === "source-document"
   ) as SourceUrlUIPart[] | SourceDocumentUIPart[] | undefined;
@@ -82,26 +86,24 @@ export const MessageAssistant = ({
 
         {toolInvocationParts && toolInvocationParts.length > 0 && (
           <div className="flex flex-col gap-2">
-            {toolInvocationParts.map((toolInvocation: ToolInvocationUIPart) => {
-              const toolCallId = toolInvocation.input.toolCallId;
-              const toolName = toolInvocation.type.replace('tool-', '');
+            {toolInvocationParts.map((toolInvocation) => {
 
-              switch (toolName) {
-                case 'showPromptInCanvas': {
+              switch (toolInvocation.type) {
+                case 'tool-showPromptInCanvas': {
+                  const callId = toolInvocation.toolCallId;
+
                   // States: input-streaming, input-available, output-available, output-error
                   switch (toolInvocation.state) {
                     case 'input-streaming':
-                    case 'input-available':
                       return (
-                        <TextShimmer key={toolCallId}>
+                        <TextShimmer>
                           Writing prompt...
                         </TextShimmer>
                       );
-
-                    case 'output-available': {
+                    case 'output-available':
                       return (
                         <button
-                          key={toolCallId}
+                          key={callId}
                           className="text-gray-500 bg-muted/50 rounded-md p-2 flex items-center gap-3 cursor-pointer"
                           onClick={() => onShowCanvas(true)}
                         >
@@ -111,7 +113,6 @@ export const MessageAssistant = ({
                           <span className="text-sm">Showing prompt in canvas...</span>
                         </button>
                       );
-                    }
                   }
                   break;
                 }
@@ -123,10 +124,10 @@ export const MessageAssistant = ({
         {sourceParts && sourceParts.length > 0 && (
           <div className="flex flex-wrap gap-1 w-full mt-2">
             {sourceParts.map((source) => (
-              <div key={source.source.id} className="text-brand-green font-semibold bg-brand-green/10 rounded-full py-2 px-4 text-sm flex items-center gap-2">
-                <a href={source.source.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <div key={source.sourceId} className="text-brand-green font-semibold bg-brand-green/10 rounded-full py-2 px-4 text-sm flex items-center gap-2">
+                <a href={"url" in source ? source.url : ""} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                   <Source className="size-4" />
-                  <p className="text-sm">{source.source.title}</p>
+                  <p className="text-sm">{source.title}</p>
                 </a>
               </div>
             ))}

@@ -25,7 +25,8 @@
       {
         "allow": [
           "api_url",
-          "experimental_attachments"
+          "experimental_attachments",
+          "google_search"
         ]
       }
     ],

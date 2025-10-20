@@ -34,8 +34,12 @@ function errorHandler(error: unknown) {
 export async function POST(req: Request) {
   try {
     const { messages, model, agentName, isSearchGrounding } = await req.json();
-    const currentAgent = agents.find(agent => agent.agentName === agentName);
 
+    console.log('--------------------------------');
+    console.log('agentName', agentName);
+    console.log('model', model);
+    const currentAgent = agents.find(agent => agent.agentName === agentName);
+    console.log('--------------------------------');
     // Work with UIMessages
     const uiMessages: UIMessage[] = messages;
 
@@ -50,27 +54,20 @@ export async function POST(req: Request) {
     //   }];
     // }
 
-    console.log('model', model);
-    console.log('agentName', agentName);
-    console.log('isSearchGrounding', isSearchGrounding);
-
     const systemPrompt =
       currentAgent?.systemPrompt || defaultConfig.systemPrompt;
 
     const defaultTools = { generateImageTool }; // Tools for all agents
-    const tools = { ...defaultTools, ...(currentAgent?.tools || {}) };
+    const tools = {
+      ...defaultTools,
+      ...(currentAgent?.tools || {}),
+      ...(isSearchGrounding && {
+        google_search: google.tools.googleSearch({})
+      })
+    };
 
     const result = streamText({
       model: google(model),
-      // model: google(model, {
-      //   useSearchGrounding: isSearchGrounding,
-      //   ...(currentAgent?.agentName === 'fact-checker' && {
-      //     dynamicRetrievalConfig: {
-      //       mode: 'MODE_DYNAMIC' as const,
-      //       dynamicThreshold: 0
-      //     }
-      //   })
-      // }),
       system: systemPrompt,
       messages: convertToModelMessages(uiMessages),
       tools,
