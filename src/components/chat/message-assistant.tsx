@@ -3,11 +3,12 @@
 import { Message, MessageActions } from '@/components/ui/message';
 import { BookMarkedIcon, Check, Copy, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Message as MessageAISDK } from 'ai';
+import type { ReasoningUIPart, SourceDocumentUIPart, SourceUrlUIPart, UIMessage } from 'ai';
 import { Markdown } from '../ui/markdown';
 import { useState } from 'react';
 import { Source } from '../fundations/icons';
 import { TextShimmer } from '../ui/text-shimmer';
+import { getMessageText } from '@/lib/message-utils';
 
 type FileUIPart = {
   type: 'file';
@@ -16,8 +17,8 @@ type FileUIPart = {
 };
 
 interface MessageAssistantProps {
-  message: MessageAISDK;
-  parts: MessageAISDK["parts"];
+  message: UIMessage;
+  parts: UIMessage["parts"];
   onReload: () => void;
   onShowCanvas: (isShowing: boolean) => void;
 }
@@ -28,8 +29,7 @@ export const MessageAssistant = ({
   onShowCanvas,
   onReload
 }: MessageAssistantProps) => {
-  const [copyMessage, setCopyMessage] = useState<string | null>(null);  
-
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -40,17 +40,20 @@ export const MessageAssistant = ({
     }, 2000);
   };
 
+  // Tool invocations now use tool-{toolName} type pattern
   const toolInvocationParts = parts?.filter(
-    (part) => part.type === "tool-invocation"
+    (part) => part.type.startsWith("tool-")
   );
 
   const sourceParts = parts?.filter(
-    (part) => part.type === "source"
-  );
+    (part) => part.type === "source-url" || part.type === "source-document"
+  ) as SourceUrlUIPart[] | SourceDocumentUIPart[] | undefined;
 
-  const reasoningParts = parts?.find((part) => part.type === "reasoning");
+  const reasoningParts = parts?.find((part) => part.type === "reasoning") as ReasoningUIPart | undefined;
 
-  const fileParts: FileUIPart | undefined = parts?.find((part) => part.type === "file");
+  const fileParts: FileUIPart | undefined = parts?.find((part) => part.type === "file") as FileUIPart | undefined;
+
+  const textContent = getMessageText(message);
 
   return (
     <Message
@@ -58,15 +61,15 @@ export const MessageAssistant = ({
       className="group justify-start"
     >
       <div className="max-w-full flex-1 sm:max-w-[75%] space-y-2 flex flex-col">
-        {reasoningParts && reasoningParts.reasoning && (
+        {reasoningParts && reasoningParts.text && (
           <div className="bg-transparent text-foreground">
-            {reasoningParts.reasoning}
+            {reasoningParts.text}
           </div>
         )}
 
-        {message.content && (
+        {textContent && (
           <Markdown className="message-content">
-            {message.content}
+            {textContent}
           </Markdown>
         )}
 
@@ -79,22 +82,23 @@ export const MessageAssistant = ({
         {toolInvocationParts && toolInvocationParts.length > 0 && (
           <div className="flex flex-col gap-2">
             {toolInvocationParts.map((toolInvocation) => {
-              const toolCallId = toolInvocation.toolInvocation.toolCallId;
-              
-              switch (toolInvocation.toolInvocation.toolName) {
-                case 'showPromptInCanvas': {
-                  switch (toolInvocation.toolInvocation.state) {
-                    case 'call':  
+
+              switch (toolInvocation.type) {
+                case 'tool-showPromptInCanvas': {
+                  const callId = toolInvocation.toolCallId;
+
+                  // States: input-streaming, input-available, output-available, output-error
+                  switch (toolInvocation.state) {
+                    case 'input-streaming':
                       return (
                         <TextShimmer>
                           Writing prompt...
                         </TextShimmer>
                       );
-
-                    case 'result': {
+                    case 'output-available':
                       return (
                         <button
-                          key={toolCallId}
+                          key={callId}
                           className="text-gray-500 bg-muted/50 rounded-md p-2 flex items-center gap-3 cursor-pointer"
                           onClick={() => onShowCanvas(true)}
                         >
@@ -104,7 +108,6 @@ export const MessageAssistant = ({
                           <span className="text-sm">Showing prompt in canvas...</span>
                         </button>
                       );
-                    }
                   }
                   break;
                 }
@@ -116,10 +119,10 @@ export const MessageAssistant = ({
         {sourceParts && sourceParts.length > 0 && (
           <div className="flex flex-wrap gap-1 w-full mt-2">
             {sourceParts.map((source) => (
-              <div key={source.source.id} className="text-brand-green font-semibold bg-brand-green/10 rounded-full py-2 px-4 text-sm flex items-center gap-2">
-                <a href={source.source.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <div key={source.sourceId} className="text-brand-green font-semibold bg-brand-green/10 rounded-full py-2 px-4 text-sm flex items-center gap-2">
+                <a href={"url" in source ? source.url : ""} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                   <Source className="size-4" />
-                  <p className="text-sm">{source.source.title}</p>
+                  <p className="text-sm">{source.title}</p>
                 </a>
               </div>
             ))}
@@ -131,9 +134,9 @@ export const MessageAssistant = ({
             variant="ghost"
             size="icon"
             className="group/item"
-            onClick={() => handleCopy(message.content)}
+            onClick={() => handleCopy(textContent)}
           >
-            {copyMessage === message.content ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500"/>}
+            {copyMessage === textContent ? <Check className="text-green-500" /> : <Copy className="group-hover/item:rotate-[-10deg] transition-transform duration-500" />}
           </Button>
 
           <Button
@@ -142,7 +145,7 @@ export const MessageAssistant = ({
             className="group/item"
             onClick={() => onReload()}
           >
-            <RefreshCcw className="group-hover/item:rotate-180 transition-transform duration-700"/>
+            <RefreshCcw className="group-hover/item:rotate-180 transition-transform duration-700" />
           </Button>
         </MessageActions>
       </div>

@@ -1,18 +1,21 @@
 import { agents, defaultConfig } from '@/ai/agents';
 import { getFactCheckerPrompt } from '@/ai/prompts';
 import { generateImageTool } from '@/ai/tools';
+import { getMessageText } from '@/lib/message-utils';
 import { Models } from '@/lib/types';
 import {
   createGoogleGenerativeAI,
   GoogleGenerativeAIProviderOptions
 } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 
 export const maxDuration = 60;
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_API_KEY
 });
+
+const isDevEnvironment = process.env.NODE_ENV !== 'production';
 
 function errorHandler(error: unknown) {
   if (error == null) {
@@ -33,36 +36,42 @@ function errorHandler(error: unknown) {
 export async function POST(req: Request) {
   try {
     const { messages, model, agentName, isSearchGrounding } = await req.json();
+    // Work with UIMessages
+    let uiMessages: UIMessage[] = messages;
+
     const currentAgent = agents.find(agent => agent.agentName === agentName);
 
     if (currentAgent?.agentName === 'fact-checker') {
-      const factCheckerPrompt = getFactCheckerPrompt(
-        messages[messages.length - 1].content
-      );
-      messages.push({
-        role: 'user',
-        content: factCheckerPrompt
-      });
+      const lastMessage = uiMessages[uiMessages.length - 1];
+      const lastMessageText = getMessageText(lastMessage);
+      const factCheckerPrompt = getFactCheckerPrompt(lastMessageText);
+
+      uiMessages = [
+        ...uiMessages,
+        {
+          id: crypto.randomUUID(),
+          role: 'user',
+          parts: [{ type: 'text', text: factCheckerPrompt }]
+        } as UIMessage
+      ];
     }
 
     const systemPrompt =
       currentAgent?.systemPrompt || defaultConfig.systemPrompt;
 
     const defaultTools = { generateImageTool }; // Tools for all agents
-    const tools = { ...defaultTools, ...(currentAgent?.tools || {}) };
+    const tools = {
+      ...defaultTools,
+      ...(currentAgent?.tools || {}),
+      ...(isSearchGrounding && {
+        google_search: google.tools.googleSearch({})
+      })
+    };
 
     const result = streamText({
-      model: google(model, {
-        useSearchGrounding: isSearchGrounding,
-        ...(currentAgent?.agentName === 'fact-checker' && {
-          dynamicRetrievalConfig: {
-            mode: 'MODE_DYNAMIC' as const,
-            dynamicThreshold: 0
-          }
-        })
-      }),
+      model: google(model),
       system: systemPrompt,
-      messages,
+      messages: convertToModelMessages(uiMessages),
       tools,
       temperature: defaultConfig.temperature,
       ...(model !== Models.GEMINI_2_0_FLASH_EXP && {
@@ -76,11 +85,11 @@ export async function POST(req: Request) {
       })
     });
 
-    return result.toDataStreamResponse({
+    return result.toUIMessageStreamResponse({
+      originalMessages: messages,
       sendSources: true,
       sendReasoning: true,
-      sendUsage: true,
-      getErrorMessage: errorHandler
+      onError: isDevEnvironment ? errorHandler : undefined
     });
   } catch (error) {
     console.error('Error in chat API:', error);

@@ -1,7 +1,7 @@
 "use client";
 
 import { PromptTextarea } from '@/components/chat/prompt-textarea';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { useSearchParams } from 'next/navigation';
 import { Agent, Models } from '@/lib/types';
@@ -12,6 +12,9 @@ import { Button } from '../ui/button';
 import { motion, AnimatePresence } from 'motion/react';
 import { Canvas } from './canvas';
 import { useFileStore } from '@/stores/use-file';
+import { DefaultChatTransport } from 'ai';
+import { getMessageText } from '@/lib/message-utils';
+import { createFileParts } from '@/lib/utils';
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -32,13 +35,15 @@ export const Chat = () => {
   const searchParams = useSearchParams();
   const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState(false);
   const [artifactValue, setArtifactValue] = useState<string | null>(null);
-  const { setAgent } = useAgent();
-  const [agentPrompt, setAgentPrompt] = useState<Agent | null>(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const [isSearchGrounding, setIsSearchGrounding] = useState(false);
   const { files: filesFromHome } = useFileStore();
   const [files, setFiles] = useState<FileList | undefined>(filesFromHome || undefined);
   const [suggestions, setSuggestions] = useState<Agent['suggestions']>([]);
+  const { setAgent } = useAgent();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // This is a wild and gross way to resolve problem using useChat hook when body values is changed. This is a bug from useChat hook.
+  const agentPromt = useRef<Agent | null>(null);
+  const isSearchGrounding = useRef(false);
 
   const handleSelectAgent = (agentName: string) => {
     if (!agentName) return;
@@ -46,39 +51,28 @@ export const Chat = () => {
     const selectedAgent = agents.filter(agent => agent.agentName === agentName);
     const agent = selectedAgent[0];
 
-    if (agent.userSearch) setIsSearchGrounding(true);
+    if (agent.userSearch) isSearchGrounding.current = true;
 
     setSuggestions(agent.suggestions);
     setAgent(agent || null);
-    setAgentPrompt(agent || null);
+    agentPromt.current = agent || null;
   };
 
-  const {
-    messages,
-    setMessages,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
-    status,
-    append,
-    stop,
-    error,
-    reload
-  } = useChat({
-    maxSteps: 1,
-    body: {
-      model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH_PREVIEW_04_17,
-      agentName: agentPrompt?.agentName || null,
-      isSearchGrounding
-    },
-    onError: (error) => {
-      console.error('Error in chat:', error);
-    },
-    onToolCall({ toolCall }) {
+  const [input, setInput] = useState('');
+
+  const { messages, status, error, sendMessage, stop, regenerate, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: () => ({
+        model: globalThis?.localStorage?.getItem("model") || Models.GEMINI_2_5_FLASH,
+        agentName: agentPromt.current?.agentName || null,
+        isSearchGrounding: isSearchGrounding.current
+      })
+    }),
+    onToolCall: ({ toolCall }) => {
       if (toolCall.toolName === 'showPromptInCanvas') {
+        setArtifactValue((toolCall.input as { prompt: string }).prompt);
         setIsArtifactPanelOpen(true);
-        setArtifactValue((toolCall.args as { prompt: string }).prompt);
       }
     }
   });
@@ -86,12 +80,12 @@ export const Chat = () => {
   useEffect(() => {
     const prompt = searchParams.get("prompt");
     if (!prompt) return;
-    const isMessageExists = messages.some(message => message.content === prompt);
+    const isMessageExists = messages.some(message => getMessageText(message) === prompt);
 
     if (!isMessageExists) {
-      append({
+      sendMessage({
         role: "user",
-        content: prompt
+        parts: [{ type: "text", text: prompt }]
       });
     }
   }, [searchParams]);
@@ -111,7 +105,7 @@ export const Chat = () => {
     }
 
     if (useSearch) {
-      setIsSearchGrounding(true);
+      isSearchGrounding.current = true;
     }
   }, [searchParams]);
 
@@ -119,10 +113,29 @@ export const Chat = () => {
     setIsArtifactPanelOpen(prev => !prev);
   };
 
+  const handleSubmit = async (images?: FileList) => {
+    if (images) {
+      const imagePromises = createFileParts(images);
+      const imageParts = await Promise.all(imagePromises);
+
+      const messageWithImages = {
+        role: 'user' as const,
+        parts: [
+          { type: 'text' as const, text: input },
+          ...imageParts
+        ]
+      };
+      sendMessage(messageWithImages);
+    } else {
+      sendMessage({ text: input });
+    }
+    setInput('');
+  };
+
   const handleEdit = useCallback((id: string, newText: string) => {
     setMessages(
       messages.map((message) =>
-        message.id === id ? { ...message, content: newText } : message
+        message.id === id ? { ...message, parts: [{ type: "text", text: newText }] } : message
       )
     );
   },
@@ -171,7 +184,7 @@ export const Chat = () => {
             messages={messages}
             status={status}
             error={error}
-            reload={reload}
+            reload={regenerate}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onShowCanvas={setIsArtifactPanelOpen}
@@ -195,18 +208,17 @@ export const Chat = () => {
 
           <PromptTextarea
             inputValue={input}
-            handleInputChange={handleInputChange}
+            handleInputChange={(e) => setInput(e.target.value)}
             handleSubmit={handleSubmit}
             isLoading={status === 'submitted' || status === 'streaming'}
             stop={stop}
-            setIsSearchGrounding={setIsSearchGrounding}
-            isSearchGrounding={isSearchGrounding}
+            setIsSearchGrounding={() => isSearchGrounding.current = !isSearchGrounding.current}
+            isSearchGrounding={isSearchGrounding.current}
             files={files}
             setFiles={setFiles}
           />
         </div>
       </motion.section>
-
       {/* TODO: Add artifact panel */}
       <AnimatePresence>
         {isArtifactPanelOpen && (

@@ -9,7 +9,6 @@ import { ChangeEvent, Dispatch, SetStateAction, useRef, useState, useEffect } fr
 import { Models } from "@/lib/types";
 import { Globe } from "@/components/fundations/icons";
 import { cn } from "@/lib/utils";
-import { ChatRequestOptions } from "ai";
 import { usePathname } from "next/navigation";
 import { InputUploadFiles } from "@/components/prompt-textarea/input-upload-files";
 import { PreviewImage } from "@/components/prompt-textarea/preview-image";
@@ -17,9 +16,7 @@ import { PreviewImage } from "@/components/prompt-textarea/preview-image";
 interface PromptTextarea {
   inputValue: string;
   handleInputChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: (event?: {
-    preventDefault?: () => void;
-  }, chatRequestOptions?: ChatRequestOptions) => void
+  handleSubmit: (images?: FileList) => void
   isLoading: boolean;
   stop?: () => void;
   setIsSearchGrounding: Dispatch<SetStateAction<boolean>>;
@@ -82,9 +79,7 @@ export const PromptTextarea = ({
 
   const handleSubmitInput = () => {
     if (files && files.length > 0) {
-      handleSubmit({}, {
-        experimental_attachments: files
-      });
+      handleSubmit(files);
     } else {
       handleSubmit();
     }
@@ -114,7 +109,7 @@ export const PromptTextarea = ({
                     onRemove={() => handleFileRemove(file)}
                   />
                 );
-              } 
+              }
 
               if (file.type.startsWith('application/pdf')) {
                 return (

@@ -581,7 +581,7 @@ ${new Date().toLocaleDateString()}
 </DATE>
 `;
 
-const generateImageToolPrompt = (userRequest: string) => `
+const generateImageToolPrompt = (userRequest: string): string => `
 <role>You are an expert AI assistant specialized in crafting precise and effective prompts for image generation models.</role>
 
 <task>Your primary task is to take a user's description of a desired image and translate it into a detailed, concise, and optimized text prompt suitable for an image generation AI. You must capture the essence of the user's request while adding descriptive elements that enhance the generated image.</task>

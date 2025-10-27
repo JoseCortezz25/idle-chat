@@ -5,7 +5,7 @@ import { z } from 'zod';
 // TODO: Implement this tool to generate an image
 const generateImageTool = tool({
   description: 'Use this tool to generate an image',
-  parameters: z.object({
+  inputSchema: z.object({
     prompt: z.string()
   }),
   execute: async ({ prompt }: { prompt: string }) => {

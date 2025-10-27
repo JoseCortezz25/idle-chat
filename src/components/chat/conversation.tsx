@@ -4,11 +4,11 @@ import { TextShimmer } from "@/components/ui/text-shimmer";
 import { ChatContainer } from "@/components/ui/chat-container";
 import { MessageUser } from "./message-user";
 import { MessageAssistant } from "./message-assistant";
-import { Message } from "ai";
+import { UIMessage } from "ai";
 import { useRef } from "react";
 
 interface ConversationProps {
-  messages: Message[];
+  messages: UIMessage[];
   status: 'submitted' | 'streaming' | 'ready' | 'error';
   error: Error | undefined;
   reload: () => void;
@@ -51,7 +51,7 @@ export const Conversation = ({
 
         return (
           <MessageUser
-            key={`${message.id}-${message.createdAt}`}
+            key={message.id}
             message={message}
             onEdit={onEdit}
             onReload={reload}
