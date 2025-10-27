@@ -31,7 +31,6 @@ export const MessageAssistant = ({
 }: MessageAssistantProps) => {
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
-
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
     setCopyMessage(content);

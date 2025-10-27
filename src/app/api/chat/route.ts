@@ -1,19 +1,21 @@
 import { agents, defaultConfig } from '@/ai/agents';
 import { getFactCheckerPrompt } from '@/ai/prompts';
 import { generateImageTool } from '@/ai/tools';
+import { getMessageText } from '@/lib/message-utils';
 import { Models } from '@/lib/types';
 import {
   createGoogleGenerativeAI,
   GoogleGenerativeAIProviderOptions
 } from '@ai-sdk/google';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
-import { getMessageText } from '@/lib/message-utils';
 
 export const maxDuration = 60;
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_API_KEY
 });
+
+const isDevEnvironment = process.env.NODE_ENV !== 'production';
 
 function errorHandler(error: unknown) {
   if (error == null) {
@@ -35,18 +37,24 @@ export async function POST(req: Request) {
   try {
     const { messages, model, agentName, isSearchGrounding } = await req.json();
     // Work with UIMessages
-    const uiMessages: UIMessage[] = messages;
+    let uiMessages: UIMessage[] = messages;
 
-    // if (currentAgent?.agentName === 'fact-checker') {
-    //   const lastMessage = uiMessages[uiMessages.length - 1];
-    //   const lastMessageText = getMessageText(lastMessage);
-    //   const factCheckerPrompt = getFactCheckerPrompt(lastMessageText);
+    const currentAgent = agents.find(agent => agent.agentName === agentName);
 
-    //   uiMessages = [...uiMessages, {
-    //     role: 'user',
-    //     parts: [{ type: 'text', text: factCheckerPrompt }]
-    //   }];
-    // }
+    if (currentAgent?.agentName === 'fact-checker') {
+      const lastMessage = uiMessages[uiMessages.length - 1];
+      const lastMessageText = getMessageText(lastMessage);
+      const factCheckerPrompt = getFactCheckerPrompt(lastMessageText);
+
+      uiMessages = [
+        ...uiMessages,
+        {
+          id: crypto.randomUUID(),
+          role: 'user',
+          parts: [{ type: 'text', text: factCheckerPrompt }]
+        } as UIMessage
+      ];
+    }
 
     const systemPrompt =
       currentAgent?.systemPrompt || defaultConfig.systemPrompt;
@@ -81,7 +89,7 @@ export async function POST(req: Request) {
       originalMessages: messages,
       sendSources: true,
       sendReasoning: true,
-      onError: errorHandler
+      onError: isDevEnvironment ? errorHandler : undefined
     });
   } catch (error) {
     console.error('Error in chat API:', error);
